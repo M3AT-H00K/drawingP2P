@@ -152,6 +152,7 @@ public class server extends Thread {
                                     // message
                                     int size = in.readInt();
                                     byte[] chat = in.readNBytes(size);
+                                    System.out.println("[server] Action code 300 - Message");
                                     synchronized(clientList){
                                         for(client c : clientList){
                                             try{
@@ -160,7 +161,6 @@ public class server extends Thread {
                                                 clientout.writeInt(size);
                                                 clientout.write(chat);
                                                 clientout.flush();
-                                                System.out.println("[server] Action code 300 - Message");
                                             }
                                             catch (IOException e){
                                                 e.printStackTrace();
@@ -168,7 +168,24 @@ public class server extends Thread {
                                         }
                                     }
                                     break;
-
+                                case 400:
+                                    int len= in.readInt();
+                                    byte[] drawingUpdate = in.readNBytes(len);
+                                    System.out.println("[server] Action code 400 - Drawing Action");
+                                    synchronized (clientList){
+                                        for(client c: clientList){
+                                            try{
+                                                DataOutputStream clientout = new DataOutputStream(c.socket.getOutputStream());
+                                                clientout.writeInt(400);
+                                                clientout.writeInt(len);
+                                                clientout.write(drawingUpdate);
+                                                clientout.flush();
+                                            }
+                                            catch(IOException ex){
+                                                ex.printStackTrace();
+                                            }
+                                        }
+                                    }
                             }
 
                         }
