@@ -28,6 +28,8 @@ public class server extends Thread {
     private boolean isRecording = false ;
     private String recorderUsername = "" ;
     private ArrayList<client> disconnected = new ArrayList<>();
+    //string tracks all actions(the drawing history)
+    String actionHistory = "";
 
     class onBoarding extends Thread{
         private ServerSocket serverSocket;
@@ -149,6 +151,15 @@ public class server extends Thread {
                                     out.flush();
                                     break;
 
+                                case 250:
+                                    int length = actionHistory.length();
+                                    byte[] history = actionHistory.getBytes();
+                                    out.writeInt(250);
+                                    out.writeInt(length);
+                                    out.write(history);
+                                    out.flush();
+                                    break;
+
                                 case 300:
                                     int size = in.readInt();
                                     byte[] chat = in.readNBytes(size);
@@ -156,9 +167,10 @@ public class server extends Thread {
                                     broadcastMessage(chat, 300);
                                     break;
 
-                                case 400:
+                                case 400: //add history to the server side array (drawing history)
                                     int len= in.readInt();
                                     byte[] drawingUpdate = in.readNBytes(len);
+                                    actionHistory+= new String(drawingUpdate);
                                     System.out.println("[server] Action code 400 - Drawing Action");
                                     broadcastMessage(drawingUpdate, 400);
                                     break;

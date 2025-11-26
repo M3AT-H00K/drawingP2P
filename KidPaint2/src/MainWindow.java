@@ -51,7 +51,8 @@ public class MainWindow {
     int numPixels = 50;
     Stage stage;
     AnimationTimer animationTimer;
-    int[][] data;
+    int[][] data = new int[numPixels][numPixels];
+    int[][] initial= data;
     double pixelSize, padSize, startX, startY;
     int selectedColorARGB;
     boolean isPenMode = true;
@@ -89,7 +90,7 @@ public class MainWindow {
     public MainWindow(Stage stage, String username, client client) throws IOException {
         this.username = username;
         this.client = client;
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("mainWindownUI.fxml"));
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("mainWindowUI.fxml"));
         loader.setController(this);
         Parent root = loader.load();
         Scene scene = new Scene(root);
@@ -114,7 +115,7 @@ public class MainWindow {
         catchUpTimeline.setCycleCount(Timeline.INDEFINITE);
 
         AnimationButtons();
-
+        InitializerThread();
         startUnifiedListenerThread();
 
         startMessageProcessingThread();
@@ -416,8 +417,37 @@ public class MainWindow {
         System.exit(0);
     }
 
+    void InitializerThread(){
+        new Thread(()->{
+            try{
+                DataInputStream in = new DataInputStream(client.serverSocket.getInputStream());
+                if(in.readInt()==250){
+                    int len = in.readInt();
+                    byte[] history = in.readNBytes(len);
+                    loadHistory(history);
+                }
+            }
+            catch(IOException e){
+                e.printStackTrace();
+            }
+        }).start();
+    }
+
+    void loadHistory(byte[] history){
+        String actionhistory = new String(history);
+        String[] actionhistoryarray = actionhistory.split(";");
+        for(String action : actionhistoryarray){
+            if (action.isEmpty()) continue;
+            String[] parts = action.split(",");
+            int col = Integer.parseInt(parts[0]);
+            int row = Integer.parseInt(parts[1]);
+            int argb = Integer.parseInt(parts[2]);
+            initial[row][col] = argb;
+        }
+    }
+
     void initial() throws IOException {
-        data = new int[numPixels][numPixels];
+        data = initial;
 
         animationTimer = new AnimationTimer() {
             @Override
